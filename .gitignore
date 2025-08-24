@@ -148,6 +148,8 @@ api/storage/*
 
 docker-legacy/volumes/app/storage/*
 docker-legacy/volumes/db/data/*
+docker-legacy/volumes/postgres/data/*
+docker-legacy/volumes/mysql/data/*
 docker-legacy/volumes/redis/data/*
 docker-legacy/volumes/weaviate/*
 docker-legacy/volumes/qdrant/*
@@ -162,6 +164,8 @@ docker-legacy/volumes/pgvector/data/*
 docker/volumes/app/storage/*
 docker/volumes/certbot/*
 docker/volumes/db/data/*
+docker/volumes/postgres/data/*
+docker/volumes/mysql/data/*
 docker/volumes/redis/data/*
 docker/volumes/weaviate/*
 docker/volumes/qdrant/*

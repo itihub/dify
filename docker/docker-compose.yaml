@@ -53,7 +53,7 @@ x-shared-env: &shared-api-worker-env
   ENABLE_WEBSITE_WATERCRAWL: ${ENABLE_WEBSITE_WATERCRAWL:-true}
   DB_USERNAME: ${DB_USERNAME:-postgres}
   DB_PASSWORD: ${DB_PASSWORD:-difyai123456}
-  DB_HOST: ${DB_HOST:-db}
+  DB_HOST: ${DB_HOST:-postgres}
   DB_PORT: ${DB_PORT:-5432}
   DB_DATABASE: ${DB_DATABASE:-dify}
   SQLALCHEMY_POOL_SIZE: ${SQLALCHEMY_POOL_SIZE:-30}
@@ -582,8 +582,12 @@ services:
       PLUGIN_MAX_PACKAGE_SIZE: ${PLUGIN_MAX_PACKAGE_SIZE:-52428800}
       INNER_API_KEY_FOR_PLUGIN: ${PLUGIN_DIFY_INNER_API_KEY:-QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1}
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
+        required: false
+      mysql:
+        condition: service_healthy
+        required: false
       redis:
         condition: service_started
     volumes:
@@ -609,8 +613,12 @@ services:
       PLUGIN_MAX_PACKAGE_SIZE: ${PLUGIN_MAX_PACKAGE_SIZE:-52428800}
       INNER_API_KEY_FOR_PLUGIN: ${PLUGIN_DIFY_INNER_API_KEY:-QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1}
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
+        required: false
+      mysql:
+        condition: service_healthy
+        required: false
       redis:
         condition: service_started
     volumes:
@@ -631,8 +639,12 @@ services:
       # Startup mode, 'worker_beat' starts the Celery beat for scheduling periodic tasks.
       MODE: beat
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
+        required: false
+      mysql:
+        condition: service_healthy
+        required: false
       redis:
         condition: service_started
     networks:
@@ -665,8 +677,10 @@ services:
       ENABLE_WEBSITE_FIRECRAWL: ${ENABLE_WEBSITE_FIRECRAWL:-true}
       ENABLE_WEBSITE_WATERCRAWL: ${ENABLE_WEBSITE_WATERCRAWL:-true}
   # The postgres database.
-  db:
+  postgres:
     image: postgres:15-alpine
+    profiles:
+      - postgres
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -680,12 +694,36 @@ services:
                -c 'maintenance_work_mem=${POSTGRES_MAINTENANCE_WORK_MEM:-64MB}'
                -c 'effective_cache_size=${POSTGRES_EFFECTIVE_CACHE_SIZE:-4096MB}'
     volumes:
-      - ./volumes/db/data:/var/lib/postgresql/data
+      - ./volumes/postgres/data:/var/lib/postgresql/data
     healthcheck:
-      test: [ 'CMD', 'pg_isready', '-h', 'db', '-U', '${PGUSER:-postgres}', '-d', '${POSTGRES_DB:-dify}' ]
+      test: [ 'CMD', 'pg_isready', '-h', 'db', '-U', '${POSTGRES_USER:-postgres}', '-d', '${POSTGRES_DB:-dify}' ]
       interval: 1s
       timeout: 3s
       retries: 60
+
+  # The mysql database.
+  mysql:
+    image: mysql:5.7
+    profiles:
+      - mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-difyai123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-dify}
+      MYSQL_USER: ${MYSQL_USER:-dify}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-difyai123456}
+    command: >
+      mysqld --character-set-server=utf8mb4
+             --collation-server=utf8mb4_unicode_ci
+             --innodb-buffer-pool-size=${MYSQL_INNODB_BUFFER_POOL_SIZE:-128M}
+             --max-connections=${MYSQL_MAX_CONNECTIONS:-100}
+    volumes:
+      - ./volumes/mysql/data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-difyai123456}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # The redis cache.
   redis:
@@ -779,8 +817,12 @@ services:
     volumes:
       - ./volumes/plugin_daemon:/app/storage
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
+        required: false
+      mysql:
+        condition: service_healthy
+        required: false
 
   # ssrf_proxy server
   # for more information, please refer to
