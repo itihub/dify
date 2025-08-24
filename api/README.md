@@ -61,6 +61,8 @@
 
    ```bash
    uv run flask db upgrade
+   uv run flask db migrate -m "init"
+   uv run flask db downgrade -1
    ```
 
 7. Start backend

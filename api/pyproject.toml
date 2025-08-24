@@ -61,8 +61,6 @@ dependencies = [
     "opentelemetry-util-http==0.48b0",
     "pandas[excel,output-formatting,performance]~=2.2.2",
     "pandoc~=2.4",
-    "psycogreen~=1.0.2",
-    "psycopg2-binary~=2.9.6",
     "pycryptodome==3.19.1",
     "pydantic~=2.11.4",
     "pydantic-extra-types~=2.10.3",
@@ -95,7 +93,7 @@ dependencies = [
 packages = []
 
 [tool.uv]
-default-groups = ["storage", "tools", "vdb"]
+default-groups = ["db", "storage", "tools", "vdb"]
 package = false
 
 [dependency-groups]
@@ -162,6 +160,16 @@ dev = [
     "pandas-stubs~=2.2.3",
     "scipy-stubs>=1.15.3.0",
     "types-python-http-client>=3.3.7.20240910",
+]
+
+############################################################
+# [ DB ] dependency group
+# Required for database connections
+############################################################
+db = [
+    "psycogreen~=1.0.2",
+    "psycopg2-binary~=2.9.6",
+    "pymysql~=1.1.0",
 ]
 
 ############################################################

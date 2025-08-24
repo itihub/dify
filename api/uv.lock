@@ -1295,8 +1295,6 @@ dependencies = [
     { name = "opik" },
     { name = "pandas", extra = ["excel", "output-formatting", "performance"] },
     { name = "pandoc" },
-    { name = "psycogreen" },
-    { name = "psycopg2-binary" },
     { name = "pycryptodome" },
     { name = "pydantic" },
     { name = "pydantic-extra-types" },
@@ -1323,6 +1321,11 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+db = [
+    { name = "psycogreen" },
+    { name = "psycopg2-binary" },
+    { name = "pymysql" },
+]
 dev = [
     { name = "boto3-stubs" },
     { name = "coverage" },
@@ -1481,8 +1484,6 @@ requires-dist = [
     { name = "opik", specifier = "~=1.7.25" },
     { name = "pandas", extras = ["excel", "output-formatting", "performance"], specifier = "~=2.2.2" },
     { name = "pandoc", specifier = "~=2.4" },
-    { name = "psycogreen", specifier = "~=1.0.2" },
-    { name = "psycopg2-binary", specifier = "~=2.9.6" },
     { name = "pycryptodome", specifier = "==3.19.1" },
     { name = "pydantic", specifier = "~=2.11.4" },
     { name = "pydantic-extra-types", specifier = "~=2.10.3" },
@@ -1509,6 +1510,11 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+db = [
+    { name = "psycogreen", specifier = "~=1.0.2" },
+    { name = "psycopg2-binary", specifier = "~=2.9.6" },
+    { name = "pymysql", specifier = "~=1.1.0" },
+]
 dev = [
     { name = "boto3-stubs", specifier = ">=1.38.20" },
     { name = "coverage", specifier = "~=7.2.4" },
