@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
 from .types import StringUUID
+from .db_compat import get_uuid_default, get_current_timestamp
 
 
 class APIBasedExtensionPoint(enum.Enum):
@@ -23,9 +24,9 @@ class APIBasedExtension(Base):
         sa.Index("api_based_extension_tenant_idx", "tenant_id"),
     )
 
-    id = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id = mapped_column(StringUUID, server_default=get_uuid_default())
     tenant_id = mapped_column(StringUUID, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     api_endpoint: Mapped[str] = mapped_column(String(255), nullable=False)
     api_key = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.current_timestamp())
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=get_current_timestamp())

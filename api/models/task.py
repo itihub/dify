@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from libs.datetime_utils import naive_utc_now
 from models.base import Base
+from models.db_compat import get_uuid_default, get_current_timestamp, get_boolean_default, get_varchar_default
 
 from .engine import db
 

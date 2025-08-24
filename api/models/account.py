@@ -12,6 +12,7 @@ from models.base import Base
 
 from .engine import db
 from .types import StringUUID
+from .db_compat import get_uuid_default, get_array_column, get_current_timestamp, get_boolean_default, get_varchar_default
 
 
 class TenantAccountRole(enum.StrEnum):
@@ -86,7 +87,7 @@ class Account(UserMixin, Base):
     __tablename__ = "accounts"
     __table_args__ = (sa.PrimaryKeyConstraint("id", name="account_pkey"), sa.Index("account_email_idx", "email"))
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     name: Mapped[str] = mapped_column(String(255))
     email: Mapped[str] = mapped_column(String(255))
     password: Mapped[Optional[str]] = mapped_column(String(255))
@@ -97,11 +98,11 @@ class Account(UserMixin, Base):
     timezone: Mapped[Optional[str]] = mapped_column(String(255))
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     last_login_ip: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    last_active_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp(), nullable=False)
-    status: Mapped[str] = mapped_column(String(16), server_default=sa.text("'active'::character varying"))
+    last_active_at: Mapped[datetime] = mapped_column(DateTime, server_default=get_current_timestamp(), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), server_default=get_varchar_default('active'))
     initialized_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp(), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=get_current_timestamp(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=get_current_timestamp(), nullable=False)
 
     @reconstructor
     def init_on_load(self):
@@ -198,14 +199,14 @@ class Tenant(Base):
     __tablename__ = "tenants"
     __table_args__ = (sa.PrimaryKeyConstraint("id", name="tenant_pkey"),)
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     name: Mapped[str] = mapped_column(String(255))
     encrypt_public_key = db.Column(sa.Text)
-    plan: Mapped[str] = mapped_column(String(255), server_default=sa.text("'basic'::character varying"))
-    status: Mapped[str] = mapped_column(String(255), server_default=sa.text("'normal'::character varying"))
+    plan: Mapped[str] = mapped_column(String(255), server_default=get_varchar_default('basic'))
+    status: Mapped[str] = mapped_column(String(255), server_default=get_varchar_default('normal'))
     custom_config: Mapped[Optional[str]] = mapped_column(sa.Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp(), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=get_current_timestamp(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=get_current_timestamp())
 
     def get_accounts(self) -> list[Account]:
         return (
@@ -232,14 +233,14 @@ class TenantAccountJoin(Base):
         sa.UniqueConstraint("tenant_id", "account_id", name="unique_tenant_account_join"),
     )
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     tenant_id: Mapped[str] = mapped_column(StringUUID)
     account_id: Mapped[str] = mapped_column(StringUUID)
-    current: Mapped[bool] = mapped_column(sa.Boolean, server_default=sa.text("false"))
+    current: Mapped[bool] = mapped_column(sa.Boolean, server_default=get_boolean_default(False))
     role: Mapped[str] = mapped_column(String(16), server_default="normal")
     invited_by: Mapped[Optional[str]] = mapped_column(StringUUID)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=get_current_timestamp())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=get_current_timestamp())
 
 
 class AccountIntegrate(Base):
@@ -250,13 +251,13 @@ class AccountIntegrate(Base):
         sa.UniqueConstraint("provider", "open_id", name="unique_provider_open_id"),
     )
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     account_id: Mapped[str] = mapped_column(StringUUID)
     provider: Mapped[str] = mapped_column(String(16))
     open_id: Mapped[str] = mapped_column(String(255))
     encrypted_token: Mapped[str] = mapped_column(String(255))
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=get_current_timestamp())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=get_current_timestamp())
 
 
 class InvitationCode(Base):
@@ -270,7 +271,7 @@ class InvitationCode(Base):
     id: Mapped[int] = mapped_column(sa.Integer)
     batch: Mapped[str] = mapped_column(String(255))
     code: Mapped[str] = mapped_column(String(32))
-    status: Mapped[str] = mapped_column(String(16), server_default=sa.text("'unused'::character varying"))
+    status: Mapped[str] = mapped_column(String(16), server_default=get_varchar_default('unused'))
     used_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
     used_by_tenant_id: Mapped[Optional[str]] = mapped_column(StringUUID)
     used_by_account_id: Mapped[Optional[str]] = mapped_column(StringUUID)
@@ -295,7 +296,7 @@ class TenantPluginPermission(Base):
         sa.UniqueConstraint("tenant_id", name="unique_tenant_plugin"),
     )
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     tenant_id: Mapped[str] = mapped_column(StringUUID, nullable=False)
     install_permission: Mapped[InstallPermission] = mapped_column(String(16), nullable=False, server_default="everyone")
     debug_permission: Mapped[DebugPermission] = mapped_column(String(16), nullable=False, server_default="noone")
@@ -318,12 +319,12 @@ class TenantPluginAutoUpgradeStrategy(Base):
         sa.UniqueConstraint("tenant_id", name="unique_tenant_plugin_auto_upgrade_strategy"),
     )
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     tenant_id: Mapped[str] = mapped_column(StringUUID, nullable=False)
     strategy_setting: Mapped[StrategySetting] = mapped_column(String(16), nullable=False, server_default="fix_only")
     upgrade_time_of_day: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)  # seconds of the day
     upgrade_mode: Mapped[UpgradeMode] = mapped_column(String(16), nullable=False, server_default="exclude")
-    exclude_plugins: Mapped[list[str]] = mapped_column(sa.ARRAY(String(255)), nullable=False)  # plugin_id (author/name)
-    include_plugins: Mapped[list[str]] = mapped_column(sa.ARRAY(String(255)), nullable=False)  # plugin_id (author/name)
-    created_at = db.Column(DateTime, nullable=False, server_default=func.current_timestamp())
-    updated_at = db.Column(DateTime, nullable=False, server_default=func.current_timestamp())
+    exclude_plugins: Mapped[list[str]] = mapped_column(get_array_column(String(255)), nullable=False)  # plugin_id (author/name)
+    include_plugins: Mapped[list[str]] = mapped_column(get_array_column(String(255)), nullable=False)  # plugin_id (author/name)
+    created_at = db.Column(DateTime, nullable=False, server_default=get_current_timestamp())
+    updated_at = db.Column(DateTime, nullable=False, server_default=get_current_timestamp())

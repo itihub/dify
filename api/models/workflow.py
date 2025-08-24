@@ -39,6 +39,7 @@ from .base import Base
 from .engine import db
 from .enums import CreatorUserRole, DraftVariableType
 from .types import EnumText, StringUUID
+from .db_compat import get_uuid_default, get_current_timestamp
 
 _logger = logging.getLogger(__name__)
 
@@ -121,7 +122,7 @@ class Workflow(Base):
         sa.Index("workflow_version_idx", "tenant_id", "app_id", "version"),
     )
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     tenant_id: Mapped[str] = mapped_column(StringUUID, nullable=False)
     app_id: Mapped[str] = mapped_column(StringUUID, nullable=False)
     type: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -131,13 +132,13 @@ class Workflow(Base):
     graph: Mapped[str] = mapped_column(sa.Text)
     _features: Mapped[str] = mapped_column("features", sa.TEXT)
     created_by: Mapped[str] = mapped_column(StringUUID, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.current_timestamp())
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=get_current_timestamp())
     updated_by: Mapped[Optional[str]] = mapped_column(StringUUID)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         default=naive_utc_now(),
-        server_onupdate=func.current_timestamp(),
+        server_onupdate=get_current_timestamp(),
     )
     _environment_variables: Mapped[str] = mapped_column(
         "environment_variables", sa.Text, nullable=False, server_default="{}"
@@ -495,7 +496,7 @@ class WorkflowRun(Base):
         sa.Index("workflow_run_triggerd_from_idx", "tenant_id", "app_id", "triggered_from"),
     )
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     tenant_id: Mapped[str] = mapped_column(StringUUID)
     app_id: Mapped[str] = mapped_column(StringUUID)
 
@@ -513,7 +514,7 @@ class WorkflowRun(Base):
     total_steps: Mapped[int] = mapped_column(sa.Integer, server_default=sa.text("0"), nullable=True)
     created_by_role: Mapped[str] = mapped_column(String(255))  # account, end_user
     created_by: Mapped[str] = mapped_column(StringUUID, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.current_timestamp())
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=get_current_timestamp())
     finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
     exceptions_count: Mapped[int] = mapped_column(sa.Integer, server_default=sa.text("0"), nullable=True)
 
@@ -704,7 +705,7 @@ class WorkflowNodeExecutionModel(Base):
             ),
         )
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     tenant_id: Mapped[str] = mapped_column(StringUUID)
     app_id: Mapped[str] = mapped_column(StringUUID)
     workflow_id: Mapped[str] = mapped_column(StringUUID)
@@ -723,7 +724,7 @@ class WorkflowNodeExecutionModel(Base):
     error: Mapped[Optional[str]] = mapped_column(sa.Text)
     elapsed_time: Mapped[float] = mapped_column(sa.Float, server_default=sa.text("0"))
     execution_metadata: Mapped[Optional[str]] = mapped_column(sa.Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.current_timestamp())
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=get_current_timestamp())
     created_by_role: Mapped[str] = mapped_column(String(255))
     created_by: Mapped[str] = mapped_column(StringUUID)
     finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
@@ -838,7 +839,7 @@ class WorkflowAppLog(Base):
         sa.Index("workflow_app_log_app_idx", "tenant_id", "app_id"),
     )
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     tenant_id: Mapped[str] = mapped_column(StringUUID)
     app_id: Mapped[str] = mapped_column(StringUUID)
     workflow_id: Mapped[str] = mapped_column(StringUUID, nullable=False)
@@ -846,7 +847,7 @@ class WorkflowAppLog(Base):
     created_from: Mapped[str] = mapped_column(String(255), nullable=False)
     created_by_role: Mapped[str] = mapped_column(String(255), nullable=False)
     created_by: Mapped[str] = mapped_column(StringUUID, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.current_timestamp())
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=get_current_timestamp())
 
     @property
     def workflow_run(self):
@@ -886,10 +887,10 @@ class ConversationVariable(Base):
     app_id: Mapped[str] = mapped_column(StringUUID, nullable=False, index=True)
     data: Mapped[str] = mapped_column(sa.Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, server_default=func.current_timestamp(), index=True
+        DateTime, nullable=False, server_default=get_current_timestamp(), index=True
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, server_default=func.current_timestamp(), onupdate=func.current_timestamp()
+        DateTime, nullable=False, server_default=get_current_timestamp(), onupdate=get_current_timestamp()
     )
 
     def __init__(self, *, id: str, app_id: str, conversation_id: str, data: str) -> None:
@@ -946,21 +947,21 @@ class WorkflowDraftVariable(Base):
     __allow_unmapped__ = True
 
     # id is the unique identifier of a draft variable.
-    id: Mapped[str] = mapped_column(StringUUID, primary_key=True, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, primary_key=True, server_default=get_uuid_default())
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         default=_naive_utc_datetime,
-        server_default=func.current_timestamp(),
+        server_default=get_current_timestamp(),
     )
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         default=_naive_utc_datetime,
-        server_default=func.current_timestamp(),
-        onupdate=func.current_timestamp(),
+        server_default=get_current_timestamp(),
+        onupdate=get_current_timestamp(),
     )
 
     # "`app_id` maps to the `id` field in the `model.App` model."

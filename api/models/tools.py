@@ -19,6 +19,7 @@ from models.base import Base
 from .engine import db
 from .model import Account, App, Tenant
 from .types import StringUUID
+from .db_compat import get_uuid_default, get_current_timestamp, get_boolean_default, get_varchar_default
 
 
 # system level tool oauth client params (client_id, client_secret, etc.)
@@ -29,7 +30,7 @@ class ToolOAuthSystemClient(Base):
         sa.UniqueConstraint("plugin_id", "provider", name="tool_oauth_system_client_plugin_id_provider_idx"),
     )
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     plugin_id = mapped_column(String(512), nullable=False)
     provider: Mapped[str] = mapped_column(String(255), nullable=False)
     # oauth params of the tool provider
@@ -44,12 +45,12 @@ class ToolOAuthTenantClient(Base):
         sa.UniqueConstraint("tenant_id", "plugin_id", "provider", name="unique_tool_oauth_tenant_client"),
     )
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     # tenant id
     tenant_id: Mapped[str] = mapped_column(StringUUID, nullable=False)
     plugin_id: Mapped[str] = mapped_column(String(512), nullable=False)
     provider: Mapped[str] = mapped_column(String(255), nullable=False)
-    enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("true"))
+    enabled: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=get_boolean_default(True))
     # oauth params of the tool provider
     encrypted_oauth_params: Mapped[str] = mapped_column(sa.Text, nullable=False)
 
@@ -70,9 +71,9 @@ class BuiltinToolProvider(Base):
     )
 
     # id of the tool provider
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     name: Mapped[str] = mapped_column(
-        String(256), nullable=False, server_default=sa.text("'API KEY 1'::character varying")
+        String(256), nullable=False, server_default=get_varchar_default('API KEY 1')
     )
     # id of the tenant
     tenant_id: Mapped[str] = mapped_column(StringUUID, nullable=True)
@@ -88,10 +89,10 @@ class BuiltinToolProvider(Base):
     updated_at: Mapped[datetime] = mapped_column(
         sa.DateTime, nullable=False, server_default=sa.text("CURRENT_TIMESTAMP(0)")
     )
-    is_default: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"))
+    is_default: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, server_default=get_boolean_default(False))
     # credential type, e.g., "api-key", "oauth2"
     credential_type: Mapped[str] = mapped_column(
-        String(32), nullable=False, server_default=sa.text("'api-key'::character varying")
+        String(32), nullable=False, server_default=get_varchar_default('api-key')
     )
     expires_at: Mapped[int] = mapped_column(sa.BigInteger, nullable=False, server_default=sa.text("-1"))
 
@@ -111,9 +112,9 @@ class ApiToolProvider(Base):
         sa.UniqueConstraint("name", "tenant_id", name="unique_api_tool_provider"),
     )
 
-    id = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id = mapped_column(StringUUID, server_default=get_uuid_default())
     # name of the api provider
-    name = mapped_column(String(255), nullable=False, server_default=sa.text("'API KEY 1'::character varying"))
+    name = mapped_column(String(255), nullable=False, server_default=get_varchar_default('API KEY 1'))
     # icon
     icon: Mapped[str] = mapped_column(String(255), nullable=False)
     # original schema
@@ -134,8 +135,8 @@ class ApiToolProvider(Base):
     # custom_disclaimer
     custom_disclaimer: Mapped[str] = mapped_column(sa.TEXT, default="")
 
-    created_at: Mapped[datetime] = mapped_column(sa.DateTime, nullable=False, server_default=func.current_timestamp())
-    updated_at: Mapped[datetime] = mapped_column(sa.DateTime, nullable=False, server_default=func.current_timestamp())
+    created_at: Mapped[datetime] = mapped_column(sa.DateTime, nullable=False, server_default=get_current_timestamp())
+    updated_at: Mapped[datetime] = mapped_column(sa.DateTime, nullable=False, server_default=get_current_timestamp())
 
     @property
     def schema_type(self) -> ApiProviderSchemaType:
@@ -171,7 +172,7 @@ class ToolLabelBinding(Base):
         sa.UniqueConstraint("tool_id", "label_name", name="unique_tool_label_bind"),
     )
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     # tool id
     tool_id: Mapped[str] = mapped_column(String(64), nullable=False)
     # tool type
@@ -192,7 +193,7 @@ class WorkflowToolProvider(Base):
         sa.UniqueConstraint("tenant_id", "app_id", name="unique_workflow_tool_provider_app_id"),
     )
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     # name of the workflow provider
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     # label of the workflow provider
@@ -251,7 +252,7 @@ class MCPToolProvider(Base):
         sa.UniqueConstraint("tenant_id", "server_identifier", name="unique_mcp_provider_server_identifier"),
     )
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     # name of the mcp provider
     name: Mapped[str] = mapped_column(String(40), nullable=False)
     # server identifier of the mcp provider
@@ -349,7 +350,7 @@ class ToolModelInvoke(Base):
     __tablename__ = "tool_model_invokes"
     __table_args__ = (sa.PrimaryKeyConstraint("id", name="tool_model_invoke_pkey"),)
 
-    id = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id = mapped_column(StringUUID, server_default=get_uuid_default())
     # who invoke this tool
     user_id = mapped_column(StringUUID, nullable=False)
     # tenant id
@@ -374,8 +375,8 @@ class ToolModelInvoke(Base):
     provider_response_latency = mapped_column(sa.Float, nullable=False, server_default=sa.text("0"))
     total_price = mapped_column(sa.Numeric(10, 7))
     currency: Mapped[str] = mapped_column(String(255), nullable=False)
-    created_at = mapped_column(sa.DateTime, nullable=False, server_default=func.current_timestamp())
-    updated_at = mapped_column(sa.DateTime, nullable=False, server_default=func.current_timestamp())
+    created_at = mapped_column(sa.DateTime, nullable=False, server_default=get_current_timestamp())
+    updated_at = mapped_column(sa.DateTime, nullable=False, server_default=get_current_timestamp())
 
 
 @deprecated
@@ -392,7 +393,7 @@ class ToolConversationVariables(Base):
         sa.Index("conversation_id_idx", "conversation_id"),
     )
 
-    id = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id = mapped_column(StringUUID, server_default=get_uuid_default())
     # conversation user id
     user_id = mapped_column(StringUUID, nullable=False)
     # tenant id
@@ -402,8 +403,8 @@ class ToolConversationVariables(Base):
     # variables pool
     variables_str = mapped_column(sa.Text, nullable=False)
 
-    created_at = mapped_column(sa.DateTime, nullable=False, server_default=func.current_timestamp())
-    updated_at = mapped_column(sa.DateTime, nullable=False, server_default=func.current_timestamp())
+    created_at = mapped_column(sa.DateTime, nullable=False, server_default=get_current_timestamp())
+    updated_at = mapped_column(sa.DateTime, nullable=False, server_default=get_current_timestamp())
 
     @property
     def variables(self) -> Any:
@@ -421,7 +422,7 @@ class ToolFile(Base):
         sa.Index("tool_file_conversation_id_idx", "conversation_id"),
     )
 
-    id: Mapped[str] = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id: Mapped[str] = mapped_column(StringUUID, server_default=get_uuid_default())
     # conversation user id
     user_id: Mapped[str] = mapped_column(StringUUID)
     # tenant id
@@ -452,7 +453,7 @@ class DeprecatedPublishedAppTool(Base):
         sa.UniqueConstraint("app_id", "user_id", name="unique_published_app_tool"),
     )
 
-    id = mapped_column(StringUUID, server_default=sa.text("uuid_generate_v4()"))
+    id = mapped_column(StringUUID, server_default=get_uuid_default())
     # id of the app
     app_id = mapped_column(StringUUID, ForeignKey("apps.id"), nullable=False)
 

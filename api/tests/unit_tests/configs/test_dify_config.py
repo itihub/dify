@@ -81,7 +81,8 @@ def test_flask_configs(monkeypatch):
     assert config["FILES_URL"] == "https://example.com"
 
     assert config["SQLALCHEMY_DATABASE_URI"] == "postgresql://postgres:postgres@localhost:5432/dify"
-    assert config["SQLALCHEMY_ENGINE_OPTIONS"] == {
+    # For PostgreSQL (default), should include options
+    expected_engine_options = {
         "connect_args": {
             "options": "-c timezone=UTC",
         },
@@ -91,6 +92,7 @@ def test_flask_configs(monkeypatch):
         "pool_size": 30,
         "pool_use_lifo": False,
     }
+    assert config["SQLALCHEMY_ENGINE_OPTIONS"] == expected_engine_options
 
     assert config["CONSOLE_WEB_URL"] == "https://example.com"
     assert config["CONSOLE_CORS_ALLOW_ORIGINS"] == ["https://example.com"]
@@ -119,13 +121,14 @@ def test_inner_api_config_exist(monkeypatch):
 
 
 def test_db_extras_options_merging(monkeypatch):
-    """Test that DB_EXTRAS options are properly merged with default timezone setting"""
-    # Set environment variables
+    """Test that DB_EXTRAS options are properly merged with default timezone setting for PostgreSQL"""
+    # Set environment variables for PostgreSQL
     monkeypatch.setenv("DB_USERNAME", "postgres")
     monkeypatch.setenv("DB_PASSWORD", "postgres")
     monkeypatch.setenv("DB_HOST", "localhost")
     monkeypatch.setenv("DB_PORT", "5432")
     monkeypatch.setenv("DB_DATABASE", "dify")
+    monkeypatch.setenv("SQLALCHEMY_DATABASE_URI_SCHEME", "postgresql")
     monkeypatch.setenv("DB_EXTRAS", "options=-c search_path=myschema")
 
     # Create config
@@ -134,10 +137,31 @@ def test_db_extras_options_merging(monkeypatch):
     # Get engine options
     engine_options = config.SQLALCHEMY_ENGINE_OPTIONS
 
-    # Verify options contains both search_path and timezone
+    # Verify options contains both search_path and timezone for PostgreSQL
     options = engine_options["connect_args"]["options"]
     assert "search_path=myschema" in options
     assert "timezone=UTC" in options
+
+
+def test_mysql_engine_options(monkeypatch):
+    """Test that MySQL doesn't get PostgreSQL-specific options"""
+    # Set environment variables for MySQL
+    monkeypatch.setenv("DB_USERNAME", "dify")
+    monkeypatch.setenv("DB_PASSWORD", "difyai123456")
+    monkeypatch.setenv("DB_HOST", "mysql")
+    monkeypatch.setenv("DB_PORT", "3306")
+    monkeypatch.setenv("DB_DATABASE", "dify")
+    monkeypatch.setenv("SQLALCHEMY_DATABASE_URI_SCHEME", "mysql+pymysql")
+
+    # Create config
+    config = DifyConfig()
+
+    # Get engine options
+    engine_options = config.SQLALCHEMY_ENGINE_OPTIONS
+
+    # Verify MySQL doesn't get PostgreSQL options
+    connect_args = engine_options["connect_args"]
+    assert len(connect_args) == 0 or "options" not in connect_args
 
 
 @pytest.mark.parametrize(
