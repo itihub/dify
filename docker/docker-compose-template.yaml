@@ -17,7 +17,7 @@ services:
       PLUGIN_MAX_PACKAGE_SIZE: ${PLUGIN_MAX_PACKAGE_SIZE:-52428800}
       INNER_API_KEY_FOR_PLUGIN: ${PLUGIN_DIFY_INNER_API_KEY:-QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1}
     depends_on:
-      postgres:
+      postgresql:
         condition: service_healthy
         required: false
       mysql:
@@ -48,7 +48,7 @@ services:
       PLUGIN_MAX_PACKAGE_SIZE: ${PLUGIN_MAX_PACKAGE_SIZE:-52428800}
       INNER_API_KEY_FOR_PLUGIN: ${PLUGIN_DIFY_INNER_API_KEY:-QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1}
     depends_on:
-      postgres:
+      postgresql:
         condition: service_healthy
         required: false
       mysql:
@@ -74,7 +74,7 @@ services:
       # Startup mode, 'worker_beat' starts the Celery beat for scheduling periodic tasks.
       MODE: beat
     depends_on:
-      postgres:
+      postgresql:
         condition: service_healthy
         required: false
       mysql:
@@ -112,10 +112,10 @@ services:
       ENABLE_WEBSITE_FIRECRAWL: ${ENABLE_WEBSITE_FIRECRAWL:-true}
       ENABLE_WEBSITE_WATERCRAWL: ${ENABLE_WEBSITE_WATERCRAWL:-true}
   # The postgres database.
-  postgres:
+  postgresql:
     image: postgres:15-alpine
     profiles:
-      - postgres
+      - postgresql
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -252,7 +252,7 @@ services:
     volumes:
       - ./volumes/plugin_daemon:/app/storage
     depends_on:
-      postgres:
+      postgresql:
         condition: service_healthy
         required: false
       mysql:
